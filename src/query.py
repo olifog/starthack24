@@ -23,20 +23,15 @@ client = MilvusClient(
     token=TOKEN
 )
 
-# Define your queries
-queries = ["Informationen zum Ersatz von Reisepässen"]
 
-# Encode the queries into embeddings
-query_embeddings = openai_ef.encode_queries(queries)
+def query(text):
+    query_embedding = openai_ef.encode_queries([text])[0]
 
-# Now you can use these embeddings to search in Milvus
-# Note: This part is assuming your collection and vector field setup
-search_params = {
-    "metric_type": "IP",
-    "params": {},
-}
+    search_params = {
+        "metric_type": "IP",
+        "params": {},
+    }
 
-for query_embedding in query_embeddings:
     search_results = client.search(
         collection_name="kanton",
         data=[query_embedding],
@@ -48,8 +43,8 @@ for query_embedding in query_embeddings:
         collection_name="kanton",
         ids=[x['id'] for x in search_results[0]],
     )
-    
-    # Handle the search results
-    print(f"Search results for query: \"{queries[0]}\"")
-    print('\n'.join([f"\n----------------------------------------------\nID: {x['id']}, Closeness: {search_results[0][i]['distance']} Path: {x['path']}\nText: {x['text'][:600]}..." for i, x in enumerate(res)]))
 
+    return [{
+        "path": x['path'],
+        "text": x['text'],
+    } for x in res]
