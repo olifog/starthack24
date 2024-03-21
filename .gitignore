@@ -1,2 +1,5 @@
 .venv
 data
+data.zip
+.env
+volumes
