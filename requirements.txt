@@ -6,3 +6,4 @@ fake_useragent
 tqdm
 requests
 pymilvus==2.4.0
+openai
