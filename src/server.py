@@ -1,40 +1,50 @@
 import base64
 import json
 import logging
-
+import os
+import twilio.jwt.access_token
+import twilio.jwt.access_token.grants
+import twilio.rest
 from flask import Flask
 from flask_sockets import Sockets
 from flask import Flask, request, Response
 from twilio.twiml.voice_response import VoiceResponse, Gather
+from dotenv import load_dotenv
+
+load_dotenv()
+
+account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+api_key = os.environ["TWILIO_API_KEY_SID"]
+api_secret = os.environ["TWILIO_API_KEY_SECRET"]
+twilio_client = twilio.rest.Client(api_key, api_secret, account_sid)
 
 app = Flask(__name__)
 sockets = Sockets(app)
 
-HTTP_SERVER_PORT = 8000
+HTTP_SERVER_PORT = 5000
 
-@app.route("/incoming_call", methods=['POST'])
-def incoming_call():
-    print('hi')
+@app.route("/process_speech", methods=['GET', 'POST'])
+def process_speech():
+    # Start our TwiML response
     resp = VoiceResponse()
-    start = resp.start()
-    # websocket_url = "wss://https://d12a-194-209-94-52.ngrok-free.app/media"
-    # start.stream(url=websocket_url)
-    
-    gather = Gather(input='speech', action='/process_speech', method='POST', timeout=10)
-    gather.say("Hallo, Sie sprechen mit dem Kanton St. Gallen", language="de-DE")
-    resp.append(gather)
 
-    resp.redirect('/incoming_call')
+    # Start our <Gather> verb
+    gather = Gather(input='speech', language='en',speechTimeout=4, action='/gather_speech')
+    gather.say('Hey, how can I help?')
+    resp.append(gather)
+    resp.redirect('/voice')
 
     return str(resp)
 
-@app.route("/process_speech", methods=['POST'])
-def process_speech():
-    print(request)
+@app.route("/gather_speech", methods=['GET', 'POST'])
+def gather_speech():
+    """Processes the user's spoken response."""
+    # Twilio sends the transcribed speech as text in the 'SpeechResult' parameter
+    speech_result = request.values.get('SpeechResult', '').lower()
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+    resp = VoiceResponse()
+    resp.say('You said: {}'.format(speech_result))
+    return str(resp)
 
 # @sockets.route('/media')
 # def echo(ws):
@@ -74,10 +84,11 @@ def hello():
 
 
 if __name__ == '__main__':
-    app.logger.setLevel(logging.DEBUG)
-    from gevent import pywsgi
-    from geventwebsocket.handler import WebSocketHandler
+    # app.logger.setLevel(logging.DEBUG)
+    # from gevent import pywsgi
+    # from geventwebsocket.handler import WebSocketHandler
 
-    server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
-    print("Server listening on: http://localhost:" + str(HTTP_SERVER_PORT))
-    server.serve_forever()
+    # server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
+    # print("Server listening on: http://localhost:" + str(HTTP_SERVER_PORT))
+    # server.serve_forever()
+    app.run(debug=True)
