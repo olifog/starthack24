@@ -23,16 +23,27 @@ sockets = Sockets(app)
 
 HTTP_SERVER_PORT = 5000
 
+@app.route("/start_page", methods=['GET', 'POST'])
+def start_page():
+    resp = VoiceResponse()
+    resp.say('Hey, how can I help?')
+    resp.redirect('/process_speech')
+    return str(resp)
+
+@app.route("/hangup", methods=['GET', 'POST'])
+def start():
+    resp = VoiceResponse()
+    resp.hangup()
+    return str(resp)
+
 @app.route("/process_speech", methods=['GET', 'POST'])
 def process_speech():
     # Start our TwiML response
     resp = VoiceResponse()
 
     # Start our <Gather> verb
-    gather = Gather(input='speech', language='en',speechTimeout=4, action='/gather_speech')
-    gather.say('Hey, how can I help?')
+    gather = Gather(input='speech', language='en',speechTimeout=3, action='/gather_speech')
     resp.append(gather)
-    resp.redirect('/voice')
 
     return str(resp)
 
@@ -41,9 +52,15 @@ def gather_speech():
     """Processes the user's spoken response."""
     # Twilio sends the transcribed speech as text in the 'SpeechResult' parameter
     speech_result = request.values.get('SpeechResult', '').lower()
-
     resp = VoiceResponse()
-    resp.say('You said: {}'.format(speech_result))
+
+    if speech_result.strip() == "":
+        resp.redirect('/hangup')
+    else:
+        # resp.play('https://demo.twilio.com/docs/classic.mp3')
+
+        resp.say('You said: {}'.format(speech_result))
+        resp.redirect('/process_speech')
     return str(resp)
 
 # @sockets.route('/media')
