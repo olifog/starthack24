@@ -22,6 +22,7 @@ app = Flask(__name__)
 sockets = Sockets(app)
 
 HTTP_SERVER_PORT = 5000
+empty_response = 0
 
 @app.route("/start_page", methods=['GET', 'POST'])
 def start_page():
@@ -55,7 +56,13 @@ def gather_speech():
     resp = VoiceResponse()
 
     if speech_result.strip() == "":
-        resp.redirect('/hangup')
+        empty_response += 1
+        if empty_response > 2:
+            resp.say('Goodbye, hope you have a good day in St Gallen!')
+            resp.redirect('/hangup')
+        else:
+            resp.say('I did not hear anything, please try again')
+            resp.redirect('/process_speech')
     else:
         # resp.play('https://demo.twilio.com/docs/classic.mp3')
 
