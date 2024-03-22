@@ -4,7 +4,7 @@ An ultra-low latency, real-time chatbot assistant serves as a telephone operator
 
 ## Tech Stack
 - Claude-3 model with engineered prompts
-- Local vector database
+- Vector database
 - Whisper API speech to text
 - OpenAI API text to speech
 - Twilio API for making phone calls
