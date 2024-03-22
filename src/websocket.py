@@ -26,19 +26,19 @@ import pickle
 
 from twilio.rest import Client
 
-account_sid = "ACd375b4aab3a51dee09a17051ebaffb54"
-auth_token  = "0f35cf4ba16a930354e265a83fa7744b"
-twilio_client = Client(account_sid, auth_token, region='us1')
-
 load_dotenv()
 
-api_key = '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'
+account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+auth_token  = os.getenv('TWILIO_AUTH_TOKEN')
+twilio_client = Client(account_sid, auth_token, region='us1')
+
+api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
 
 system_prompt = open('src/system_prompt.txt', 'r').read()
 
 el_client = ElevenLabs(
-    api_key="7afd32d708e98824e822491c81d4fb9d",
+    api_key=os.environ['ELEVENLABS_API_KEY'],
 )
 
 app = Flask(__name__)

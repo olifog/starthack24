@@ -10,14 +10,16 @@ from elevenlabs import stream, play
 from elevenlabs.client import ElevenLabs
 import httpx
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 el_client = ElevenLabs(
-    api_key="7afd32d708e98824e822491c81d4fb9d",
+    api_key=os.getenv('ELEVENLABS_API_KEY'),
 )
 
-anthropic_api_key = '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'
-
-api_key = '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'
+api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
 
 system_prompt = open('src/system_prompt.txt', 'r').read()
@@ -71,7 +73,7 @@ def analyze_and_delegate(message):
         messages=[
             {
                 "role": "system",
-                "content": "You are a delegation bot. You should analyze the user message (a full conversation) and output a single word that determines whether the result of the conversation is a delegation to a human or whether the bot conversation should continue. Err on the side of the conversation continuing. Your two output options are 'delegate' or 'continue'.",
+                "content": "You are a delegation bot. You should analyze the user message (a full conversation) and output a single word that determines whether the result of the conversation is a delegation to a human or whether the bot conversation should continue. Err on the side of the conversation continuing. Your two output options are 'delegate' or 'continue'. If you at all mention talking to another Kanton department, output 'delegate'",
             },
             {
                 "role": "user",
