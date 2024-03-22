@@ -65,6 +65,24 @@ def handle_user_message(message, queue, conversation, accumulator):
         accumulator.append(sentence)
     queue.put(None)
 
+def analyze_and_delegate(message):
+    result = client.chat.completions.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a delegation bot. You should analyze the user message (a full conversation) and output a single word that determines whether the result of the conversation is a delegation to a human or whether the bot conversation should continue. Err on the side of the conversation continuing. Your two output options are 'delegate' or 'continue'.",
+            },
+            {
+                "role": "user",
+                "content": message
+            }
+        ],
+        model="gpt-4",
+    )
+
+    return result.choices[0].message.content.strip().lower()
+
 def synthesize_audio(text_queue, audio_queue, el_client):
     """Synthesize audio from text and push it to another queue."""
     while True:

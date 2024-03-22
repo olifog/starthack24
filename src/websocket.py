@@ -17,7 +17,7 @@ from twilio.twiml.voice_response import VoiceResponse, Connect, Gather, Stream
 from twilio.rest.api.v2010.account.call import CallInstance
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
-from main3 import handle_user_message, synthesize_audio
+from main3 import handle_user_message, synthesize_audio, analyze_and_delegate
 import json
 from flask_sockets import Sockets
 from gevent.queue import Queue
@@ -84,7 +84,6 @@ def process_speech():
     stream.parameter(name='previousConversation', value=previous_conversation)
     connect.nest(stream)
     response.append(connect)
-    response.pause(length=5)
 
     print(str(response))
     return str(response)
@@ -182,10 +181,12 @@ def conversation(ws):
 
     previous_conversation += ''.join(accumulator)
 
-    # TODO: run analysis and see whether we should delegate the call or go back to gather speech
+    choice = analyze_and_delegate(previous_conversation)
 
-    call = twilio_client.calls.get(call_sid)
-    call.update(url=f"https://43e8-194-209-94-51.ngrok-free.app/gather_speech?{urllib.parse.urlencode({'previousConversation': previous_conversation})}", method="POST")
+    if choice == 'continue':
+        call = twilio_client.calls.get(call_sid)
+        call.update(url=f"https://43e8-194-209-94-51.ngrok-free.app/gather_speech?{urllib.parse.urlencode({'previousConversation': previous_conversation})}", method="POST")
+
 
 if __name__ == "__main__":
     server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)
