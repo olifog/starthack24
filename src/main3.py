@@ -22,6 +22,13 @@ client = OpenAI(api_key=api_key)
 
 system_prompt = open('src/system_prompt.txt', 'r').read()
 
+def get_audio_duration(audio):
+    bitrate_kbps = 128
+    bitrate_bps = bitrate_kbps * 1000
+
+    audio_length_seconds = (len(audio) * 8) / bitrate_bps
+    return audio_length_seconds
+
 def handle_user_message(message, queue):
     """Prompt the LLM with the entire user message, pushing sentences to a queue."""
     documents = query(message)
@@ -80,6 +87,8 @@ def play_audio(audio_queue):
 def main():
     text_queue = queue.Queue()
     audio_queue = queue.Queue()
+
+    print("STARTING!!!!!")
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         executor.submit(handle_user_message, "Wie melde ich mein Fahrzeug an?", text_queue)
