@@ -21,6 +21,7 @@ import json
 from flask_sockets import Sockets
 from gevent.queue import Queue
 import base64
+import pickle
 
 from twilio.rest import Client
 
@@ -43,6 +44,9 @@ app = Flask(__name__)
 sockets = Sockets(app)
 
 HTTP_SERVER_PORT = 8080
+
+with open('bitte.pkl', 'rb') as f:
+    bitte = pickle.load(f)
 
 @app.route("/start_page", methods=['GET', 'POST'])
 def start_page():
@@ -103,6 +107,16 @@ def conversation(ws):
             call_sid = data.get('start', {}).get('callSid')
             speech_result = data.get('start', {}).get('customParameters', {}).get('speechResult')
             break
+    
+    def send_first_message():
+        media_payload = {
+            "event": "media",
+            "streamSid": stream_sid,
+            "media": {
+                "payload": base64.b64encode(bitte).decode('utf-8')
+            }
+        }
+        ws.send(json.dumps(media_payload))
 
     def send_audio(aq):
         while True:
@@ -141,6 +155,7 @@ def conversation(ws):
                 break
 
     greenlets = [
+        gevent.spawn(send_first_message),
         gevent.spawn(handle_user_message, speech_result, text_queue),
         gevent.spawn(synthesize_audio, text_queue, audio_queue, el_client),
         gevent.spawn(send_audio, audio_queue),
@@ -148,6 +163,9 @@ def conversation(ws):
     ]
 
     gevent.joinall(greenlets)
+
+    # TODO: run analysis and see whether we should delegate the call or go back to gather speech
+
 
     call = twilio_client.calls.get(call_sid)
     call.update(url="https://43e8-194-209-94-51.ngrok-free.app/gather_speech", method="POST")

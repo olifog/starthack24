@@ -54,7 +54,7 @@ def handle_user_message(message, queue):
         try:
             for c in chunk.choices[0].delta.content:
                 sentence += c
-                if c == ' ' and sentence[-2] in ['.', '!', '?']:
+                if c == ' ' and sentence[-2] in ['.', '!', '?', ',', ':']:
                     queue.put(sentence)  # Push sentences to the queue
                     print("Generated sentence:", sentence)
                     sentence = ''
