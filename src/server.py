@@ -27,7 +27,7 @@ empty_response = 0
 @app.route("/start_page", methods=['GET', 'POST'])
 def start_page():
     resp = VoiceResponse()
-    resp.say('Hey, how can I help?')
+    resp.say('Hallo, wie kann ich Ihnen helfen?', voice='Woman', language='de-DE')
     resp.redirect('/process_speech')
     return str(resp)
 
@@ -43,7 +43,7 @@ def process_speech():
     resp = VoiceResponse()
 
     # Start our <Gather> verb
-    gather = Gather(input='speech', language='en',speechTimeout=3, action='/gather_speech')
+    gather = Gather(input='speech', language='de',speechTimeout=3, action='/gather_speech')
     resp.append(gather)
 
     return str(resp)
@@ -58,15 +58,15 @@ def gather_speech():
     if speech_result.strip() == "":
         empty_response += 1
         if empty_response > 2:
-            resp.say('Goodbye, hope you have a good day in St Gallen!')
+            resp.say('Auf Wiedersehen! Ich wünsche Ihnen einen schönen Tag in St. Gallen!', voice='Woman', language='de-DE')
             resp.redirect('/hangup')
         else:
-            resp.say('I did not hear anything, please try again')
+            resp.say("Ich habe nichts gehört. Bitte versuchen Sie es erneut.", voice='Woman', language='de-DE')
             resp.redirect('/process_speech')
     else:
         # resp.play('https://demo.twilio.com/docs/classic.mp3')
 
-        resp.say('You said: {}'.format(speech_result))
+        resp.say('You said: {}'.format(speech_result), voice='Woman', language='de-DE')
         resp.redirect('/process_speech')
     return str(resp)
 
