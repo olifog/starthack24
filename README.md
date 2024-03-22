@@ -5,7 +5,6 @@ An ultra-low latency, real-time chatbot assistant serves as a telephone operator
 ## Tech Stack
 - GPT-4 model with engineered prompts
 - Vector database
-- Whisper API speech to text
 - Elevenlabs API text to speech
 - Twilio API for making phone calls
 - Flask backend, hosted using ngrok
