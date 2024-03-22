@@ -1,5 +1,15 @@
 # starthack24
+## Design Brief
+An ultra-low latency, real-time chatbot assistant serves as a telephone operator for the [Government of St Gallen website](www.sg.ch). It efficiently handles incoming calls, providing answers to queries, or redirecting calls to specific government departments as needed. This solution facilitates time-management for officials in the call center, enabling them to focus on more critical tasks.
 
+## Tech Stack
+- Claude-3 model with engineered prompts
+- Local vector database
+- Whisper API speech to text
+- OpenAI API text to speech
+- Twilio API for making phone calls
+- Flask backend, hosted using ngrok
+  
 ## setup
 
 1. `python3 -m venv .venv`
