@@ -38,7 +38,7 @@ client = OpenAI(api_key=api_key)
 system_prompt = open('src/system_prompt.txt', 'r').read()
 
 el_client = ElevenLabs(
-    api_key=os.environ['ELEVENLABS_API_KEY'],
+    api_key=os.getenv('ELEVENLABS_API_KEY'),
 )
 
 app = Flask(__name__)
