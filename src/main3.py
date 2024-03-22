@@ -38,7 +38,7 @@ def handle_user_message(message, queue):
         messages=[
             {
                 "role": "system",
-                "content": system_prompt + "\n\nInformation from the Kanton:" + json.dumps(documents),
+                "content": system_prompt + "\n\nInformation from the Kanton:" + json.dumps(documents)[:2*6000],
             },
             {
                 "role": "user",
@@ -71,7 +71,7 @@ def synthesize_audio(text_queue, audio_queue, el_client):
         if sentence is None:
             audio_queue.put(None)
             break
-        audio = el_client.generate(text=sentence, voice="K75lPKuh15SyVhQC1LrE", model="eleven_multilingual_v2", stream=True)
+        audio = el_client.generate(text=sentence, voice="K75lPKuh15SyVhQC1LrE", model="eleven_multilingual_v2", stream=True, output_format="ulaw_8000")
         print("Synthesized audio:", sentence)
         audio_queue.put(audio)
 
