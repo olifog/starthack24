@@ -2,6 +2,7 @@ import gevent
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
 from gevent import monkey
+import urllib
 monkey.patch_all()
 
 import os
@@ -60,8 +61,9 @@ def start_page():
 @app.route("/gather_speech", methods=['GET', 'POST'])
 def gather_speech():
     print('gather_speech')
+    previous_conversation = request.values.get('previousConversation', '')
     response = VoiceResponse()
-    gather = Gather(input='speech', language='de-DE', speechTimeout=3, action='/process_speech')
+    gather = Gather(input='speech', language='de-DE', speechTimeout=3, action=f'/process_speech?{urllib.parse.urlencode({"previousConversation": previous_conversation})}')
     response.append(gather)
     return str(response)
 
@@ -71,6 +73,7 @@ def process_speech():
     connect = Connect()
 
     speech_result = request.values.get('SpeechResult', '').lower()
+    previous_conversation = request.values.get('previousConversation', '')
     print(f'Processing speech: {speech_result}')
 
     stream = Stream(
@@ -78,6 +81,7 @@ def process_speech():
         url='wss://43e8-194-209-94-51.ngrok-free.app/conversation',
     )
     stream.parameter(name='speechResult', value=speech_result)
+    stream.parameter(name='previousConversation', value=previous_conversation)
     connect.nest(stream)
     response.append(connect)
     response.pause(length=5)
@@ -91,6 +95,7 @@ def conversation(ws):
 
     stream_sid = None
     call_sid = None
+    previous_conversation = ''
     text_queue = Queue()
     audio_queue = Queue()
     speech_result = None
@@ -106,7 +111,14 @@ def conversation(ws):
             stream_sid = data.get('streamSid')
             call_sid = data.get('start', {}).get('callSid')
             speech_result = data.get('start', {}).get('customParameters', {}).get('speechResult')
+            previous_conversation = data.get('start', {}).get('customParameters', {}).get('previousConversation')
             break
+        
+    say_bitte = False
+    if previous_conversation == '':
+        say_bitte = True
+    
+    previous_conversation += '\n\n' + speech_result
     
     def send_first_message():
         media_payload = {
@@ -153,22 +165,27 @@ def conversation(ws):
                 break
             if data.get('event') == 'mark':
                 break
+    
+    accumulator = []
 
     greenlets = [
-        gevent.spawn(send_first_message),
-        gevent.spawn(handle_user_message, speech_result, text_queue),
+        gevent.spawn(handle_user_message, speech_result, text_queue, previous_conversation, accumulator),
         gevent.spawn(synthesize_audio, text_queue, audio_queue, el_client),
         gevent.spawn(send_audio, audio_queue),
         gevent.spawn(wait_for_end)
     ]
 
+    if say_bitte:
+        greenlets.append(gevent.spawn(send_first_message))
+
     gevent.joinall(greenlets)
+
+    previous_conversation += ''.join(accumulator)
 
     # TODO: run analysis and see whether we should delegate the call or go back to gather speech
 
-
     call = twilio_client.calls.get(call_sid)
-    call.update(url="https://43e8-194-209-94-51.ngrok-free.app/gather_speech", method="POST")
+    call.update(url=f"https://43e8-194-209-94-51.ngrok-free.app/gather_speech?{urllib.parse.urlencode({'previousConversation': previous_conversation})}", method="POST")
 
 if __name__ == "__main__":
     server = pywsgi.WSGIServer(('', HTTP_SERVER_PORT), app, handler_class=WebSocketHandler)

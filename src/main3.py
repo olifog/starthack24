@@ -29,7 +29,7 @@ def get_audio_duration(audio):
     audio_length_seconds = (len(audio) * 8) / bitrate_bps
     return audio_length_seconds
 
-def handle_user_message(message, queue):
+def handle_user_message(message, queue, conversation, accumulator):
     """Prompt the LLM with the entire user message, pushing sentences to a queue."""
     documents = query(message)
 
@@ -38,7 +38,7 @@ def handle_user_message(message, queue):
         messages=[
             {
                 "role": "system",
-                "content": system_prompt + "\n\nInformation from the Kanton:" + json.dumps(documents)[:2*6000],
+                "content": system_prompt + "\n\nInformation from the Kanton:" + json.dumps(documents)[:2*6000] + '\n\nLast messages with user:\n' + conversation,
             },
             {
                 "role": "user",
@@ -56,12 +56,13 @@ def handle_user_message(message, queue):
                 sentence += c
                 if c == ' ' and sentence[-2] in ['.', '!', '?', ',', ':']:
                     queue.put(sentence)  # Push sentences to the queue
-                    print("Generated sentence:", sentence)
+                    accumulator.append(sentence)
                     sentence = ''
         except TypeError:
             break
     if sentence:
         queue.put(sentence)
+        accumulator.append(sentence)
     queue.put(None)
 
 def synthesize_audio(text_queue, audio_queue, el_client):
